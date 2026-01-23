@@ -15,17 +15,28 @@ export async function GET(request: NextRequest) {
     // Create response that we can set cookies on
     const response = NextResponse.redirect(`${origin}${next}`);
 
+    // Track cookies that get set during the exchange
+    const cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[] = [];
+
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            // Return both existing cookies and any we've set during this request
+            const existingCookies = cookieStore.getAll();
+            const newCookieNames = new Set(cookiesToSet.map(c => c.name));
+            const filteredExisting = existingCookies.filter(c => !newCookieNames.has(c.name));
+            return [
+              ...filteredExisting,
+              ...cookiesToSet.map(c => ({ name: c.name, value: c.value })),
+            ];
           },
-          setAll(cookiesToSet) {
-            // Set cookies on the response object
-            cookiesToSet.forEach(({ name, value, options }) => {
+          setAll(cookies) {
+            // Track cookies and set them on response
+            cookies.forEach(({ name, value, options }) => {
+              cookiesToSet.push({ name, value, options: options || {} });
               response.cookies.set(name, value, options);
             });
           },
