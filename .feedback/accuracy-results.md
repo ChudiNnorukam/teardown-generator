@@ -1,6 +1,6 @@
 # Tech Stack Detection Accuracy Results
 
-**Date:** 2026-01-22
+**Date:** 2026-01-23
 **Target:** 85% recall
 **Result:** 68.8% recall, 55.9% precision
 
@@ -14,6 +14,10 @@
 | True positives | 33 | - | - |
 | False positives | 26 | - | - |
 | False negatives | 15 | - | - |
+
+## Notes
+
+- Results reflect heuristic-only detection (no BuiltWith/Wappalyzer API keys configured).
 
 ## Known Limitations
 

@@ -17,11 +17,20 @@ export interface RateLimitConfig {
   ipAddress?: string;
 }
 
+function resolveLimit(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return Math.floor(parsed);
+  }
+
+  return fallback;
+}
+
 // Rate limit tiers
 const RATE_LIMITS = {
-  anonymous: 3,
-  free: 10,
-  pro: 1000,
+  anonymous: resolveLimit(process.env.TEARDOWN_RATE_LIMIT_ANON, 3),
+  free: resolveLimit(process.env.TEARDOWN_RATE_LIMIT_FREE, 10),
+  pro: resolveLimit(process.env.TEARDOWN_RATE_LIMIT_PRO, 1000),
 } as const;
 
 /**
@@ -35,7 +44,7 @@ function hashIp(ip: string): string {
  * Check rate limit for a given user/session/IP
  */
 export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimitResult> {
-  const { userId, sessionId: _sessionId, ipAddress } = config;
+  const { userId, ipAddress } = config;
 
   // Determine user type and limits
   let plan: 'free' | 'pro' = 'free';
@@ -43,14 +52,29 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimit
 
   if (userId) {
     // Authenticated user - check their plan
+    const today = new Date().toISOString().split('T')[0];
     const { data: tracking } = (await supabaseAdmin
       .from('usage_tracking')
       .select('plan, teardown_count')
       .eq('user_id', userId)
-      .eq('date', new Date().toISOString().split('T')[0])
-      .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'plan' | 'teardown_count'> | null };
+      .eq('date', today)
+      .maybeSingle()) as {
+      data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'plan' | 'teardown_count'> | null;
+    };
 
-    plan = tracking?.plan || 'free';
+    if (tracking?.plan) {
+      plan = tracking.plan;
+    } else {
+      const { data: latestTracking } = (await supabaseAdmin
+        .from('usage_tracking')
+        .select('plan')
+        .eq('user_id', userId)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'plan'> | null };
+
+      plan = latestTracking?.plan || 'free';
+    }
     limit = plan === 'pro' ? RATE_LIMITS.pro : RATE_LIMITS.free;
 
     const used = tracking?.teardown_count || 0;
@@ -130,7 +154,7 @@ export async function incrementUsage(config: RateLimitConfig): Promise<void> {
       .select('id, teardown_count')
       .eq('user_id', userId)
       .eq('date', today)
-      .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'teardown_count'> | null };
+      .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'teardown_count'> | null };
 
     if (existing) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,13 +162,23 @@ export async function incrementUsage(config: RateLimitConfig): Promise<void> {
         .update({ teardown_count: existing.teardown_count + 1 })
         .eq('id', existing.id);
     } else {
+      const { data: latestTracking } = (await supabaseAdmin
+        .from('usage_tracking')
+        .select('plan')
+        .eq('user_id', userId)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'plan'> | null };
+
+      const plan = latestTracking?.plan || 'free';
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabaseAdmin.from('usage_tracking') as any).insert({
         user_id: userId,
         session_id: sessionId,
         date: today,
         teardown_count: 1,
-        plan: 'free',
+        plan,
       });
     }
   } else {

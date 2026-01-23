@@ -74,7 +74,7 @@ export function PricingSection() {
       } else {
         setUpgrading(false);
       }
-    } catch (_error) {
+    } catch {
       setUpgrading(false);
     }
   };

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { UsageIndicator } from '@/components/UsageIndicator';
 import { AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
 
 export function UrlInputForm() {
@@ -68,7 +69,7 @@ export function UrlInputForm() {
 
       // Redirect to teardown page
       router.push(`/teardown/${data.teardownId}`);
-    } catch (_err) {
+    } catch {
       setError('Network error. Please try again.');
       setLoading(false);
     }
@@ -107,10 +108,13 @@ export function UrlInputForm() {
         </Alert>
       )}
 
-      <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1">✓ Free</span>
-        <span className="flex items-center gap-1">✓ No signup required</span>
-        <span className="flex items-center gap-1">✓ 3 analyses per day</span>
+      <div className="flex flex-col items-center gap-3">
+        <UsageIndicator />
+        <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">✓ Free</span>
+          <span className="flex items-center gap-1">✓ No signup required</span>
+          <span className="flex items-center gap-1">✓ Instant results</span>
+        </div>
       </div>
     </form>
   );

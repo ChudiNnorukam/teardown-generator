@@ -1,5 +1,6 @@
 // Tech stack detection from HTML and headers
 import type { TechStackItem } from '@/types/database';
+import { getTechEnrichment } from './tech-enrichment';
 
 interface DetectionPattern {
   name: string;
@@ -249,9 +250,57 @@ const MULTI_MATCH_REQUIRED: Record<string, number> = {
   'Astro': 1,         // Require at least 1 very specific pattern
 };
 
+const CONFIDENCE_RANK: Record<TechStackItem['confidence'], number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
+
+function mergeTechStack(base: TechStackItem[], enrichment: TechStackItem[]): TechStackItem[] {
+  const merged = new Map<string, TechStackItem>();
+
+  for (const item of base) {
+    merged.set(item.name.toLowerCase(), { ...item });
+  }
+
+  for (const item of enrichment) {
+    const key = item.name.toLowerCase();
+    const existing = merged.get(key);
+
+    if (!existing) {
+      merged.set(key, { ...item });
+      continue;
+    }
+
+    const confidence =
+      CONFIDENCE_RANK[item.confidence] > CONFIDENCE_RANK[existing.confidence]
+        ? item.confidence
+        : existing.confidence;
+
+    const evidenceParts = new Set(
+      [existing.evidence, item.evidence].filter(Boolean)
+    );
+
+    const category =
+      existing.category === 'Other' && item.category !== 'Other'
+        ? item.category
+        : existing.category;
+
+    merged.set(key, {
+      ...existing,
+      category,
+      confidence,
+      evidence: Array.from(evidenceParts).join('; '),
+    });
+  }
+
+  return Array.from(merged.values());
+}
+
 export async function analyzeTechStack(
   html: string,
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  targetUrl?: string
 ): Promise<TechStackItem[]> {
   const detected: TechStackItem[] = [];
   const detectedNames = new Set<string>();
@@ -337,13 +386,28 @@ export async function analyzeTechStack(
     }
   }
 
+  let enriched: TechStackItem[] = [];
+
+  if (targetUrl) {
+    try {
+      const domain = new URL(targetUrl).hostname;
+      enriched = await getTechEnrichment(domain);
+    } catch {
+      enriched = [];
+    }
+  }
+
+  const merged = mergeTechStack(detected, enriched);
+
   // Sort by category priority: Framework > CSS > Backend > Analytics > Payments > Hosting > CDN
-  const categoryOrder = ['Framework', 'CSS', 'Backend', 'Auth', 'Analytics', 'Payments', 'Hosting', 'CDN'];
-  detected.sort((a, b) => {
+  const categoryOrder = ['Framework', 'CSS', 'Backend', 'Auth', 'Analytics', 'Payments', 'Hosting', 'CDN', 'Other'];
+  merged.sort((a, b) => {
     const aOrder = categoryOrder.indexOf(a.category);
     const bOrder = categoryOrder.indexOf(b.category);
-    return aOrder - bOrder;
+    const normalizedA = aOrder === -1 ? categoryOrder.length : aOrder;
+    const normalizedB = bOrder === -1 ? categoryOrder.length : bOrder;
+    return normalizedA - normalizedB;
   });
 
-  return detected;
+  return merged;
 }

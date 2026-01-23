@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-01-23T06:01:41.900Z",
+  "scenarios": {
+    "smoke": {
+      "requests": 15348,
+      "avgDuration": 144.48457681782622
+    },
+    "load": {
+      "requests": 15348,
+      "p95Duration": 293.7953
+    },
+    "stress": {
+      "requests": 15348,
+      "errorRate": 0.00008582217645039479
+    }
+  },
+  "thresholds": {
+    "passed": true
+  }
+}

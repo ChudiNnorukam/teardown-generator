@@ -1,10 +1,12 @@
 // GET /api/teardown/[id]/analyze - Stream analysis progress
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { authorizeTeardownAccess } from '@/lib/teardown-access';
 import { analyzeTechStack } from '@/lib/analyzer/tech-stack';
 import { analyzePricing } from '@/lib/analyzer/pricing';
 import { analyzeSEO } from '@/lib/analyzer/seo';
 import { analyzeCloneEstimate } from '@/lib/analyzer/clone-estimate';
+import { getUserFriendlyError } from '@/lib/errors';
 import { createHash } from 'crypto';
 import type { Database } from '@/types/database';
 
@@ -88,6 +90,18 @@ export async function GET(
     );
   }
 
+  const access = await authorizeTeardownAccess(request, teardown);
+
+  if (!access.authorized) {
+    return NextResponse.json(
+      {
+        error: access.reason === 'unauthorized' ? 'unauthorized' : 'forbidden',
+        message: 'Not authorized to access this teardown',
+      },
+      { status: access.reason === 'unauthorized' ? 401 : 403 }
+    );
+  }
+
   // Create Server-Sent Events stream
   const stream = new ReadableStream({
     async start(controller) {
@@ -126,7 +140,7 @@ export async function GET(
           message: 'Detecting technologies...',
         });
 
-        const techStack = await analyzeTechStack(html, headers);
+        const techStack = await analyzeTechStack(html, headers, teardown.target_url);
 
         send({
           step: 'tech_stack',
@@ -211,21 +225,24 @@ export async function GET(
         console.error('Analysis error:', error);
 
         // Store full error internally for debugging
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const internalMessage = error instanceof Error ? error.message : 'Unknown error';
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabaseAdmin.from('teardowns') as any)
           .update({
             status: 'failed',
-            error_message: errorMessage,
+            error_message: internalMessage,
           })
           .eq('id', id);
+
+        // Get user-friendly error message
+        const friendlyError = getUserFriendlyError(error, 'analyzing the website');
 
         // Send user-friendly error message to client (never expose internals)
         send({
           step: 'error',
           status: 'failed',
-          message: 'Analysis failed. Please try again with a different URL.',
+          message: `${friendlyError.title}: ${friendlyError.message} ${friendlyError.suggestion}`,
         });
       }
 

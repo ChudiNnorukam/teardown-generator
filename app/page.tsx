@@ -6,6 +6,7 @@ import { TechBadge } from '@/components/ui/TechBadge';
 import { ScoreGauge } from '@/components/ui/ScoreGauge';
 import { PricingTierCard } from '@/components/ui/PricingTierCard';
 import { PricingSection } from '@/components/PricingSection';
+import { ComparisonSection } from '@/components/ComparisonSection';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -306,7 +307,10 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section 6: Pricing */}
+        {/* Section 6: Comparison */}
+        <ComparisonSection />
+
+        {/* Section 7: Pricing */}
         <PricingSection />
 
         {/* Section 7: FAQ */}
