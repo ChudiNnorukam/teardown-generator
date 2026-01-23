@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
       redirectUrl = `${origin}${next}`;
     }
 
-    // Create the response first so we can set cookies on it
-    const response = NextResponse.redirect(redirectUrl);
+    // Track cookies to set - we'll add them to the response after exchange
+    const cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[] = [];
 
-    // Create Supabase client with cookie handlers that work in Route Handlers
+    // Create Supabase client with cookie handlers
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
+          setAll(cookies) {
+            cookies.forEach(({ name, value, options }) => {
+              cookiesToSet.push({ name, value, options: options || {} });
             });
           },
         },
@@ -65,6 +65,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (data.session) {
+      // Create redirect response and add all cookies
+      const response = NextResponse.redirect(redirectUrl);
+
+      // Add all session cookies to the response
+      for (const { name, value, options } of cookiesToSet) {
+        response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]);
+      }
+
       return response;
     }
   }
