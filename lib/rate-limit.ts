@@ -35,7 +35,7 @@ function hashIp(ip: string): string {
  * Check rate limit for a given user/session/IP
  */
 export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimitResult> {
-  const { userId, sessionId, ipAddress } = config;
+  const { userId, sessionId: _sessionId, ipAddress } = config;
 
   // Determine user type and limits
   let plan: 'free' | 'pro' = 'free';
@@ -133,11 +133,12 @@ export async function incrementUsage(config: RateLimitConfig): Promise<void> {
       .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'teardown_count'> | null };
 
     if (existing) {
-      await (supabaseAdmin
-        .from('usage_tracking') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin.from('usage_tracking') as any)
         .update({ teardown_count: existing.teardown_count + 1 })
         .eq('id', existing.id);
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabaseAdmin.from('usage_tracking') as any).insert({
         user_id: userId,
         session_id: sessionId,
@@ -163,11 +164,12 @@ export async function incrementUsage(config: RateLimitConfig): Promise<void> {
       .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'teardown_count'> | null };
 
     if (existing) {
-      await (supabaseAdmin
-        .from('usage_tracking') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin.from('usage_tracking') as any)
         .update({ teardown_count: existing.teardown_count + 1 })
         .eq('id', existing.id);
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabaseAdmin.from('usage_tracking') as any).insert({
         user_id: null,
         session_id: sessionId,

@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
 
       // Redirect to login with success message
       router.push('/login?message=password_updated');
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred');
       setLoading(false);
     }

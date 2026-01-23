@@ -26,16 +26,17 @@ export function ScoreGauge({ score, max = 100, label, size = 'md' }: ScoreGaugeP
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
+  // Design system colors
   const getColor = () => {
-    if (percentage <= 40) return 'text-red-500';
-    if (percentage <= 70) return 'text-amber-500';
-    return 'text-emerald-500';
+    if (percentage <= 40) return 'text-destructive';
+    if (percentage <= 70) return 'text-primary';
+    return 'text-accent';
   };
 
   const getStrokeColor = () => {
-    if (percentage <= 40) return '#ef4444';
-    if (percentage <= 70) return '#f59e0b';
-    return '#10b981';
+    if (percentage <= 40) return '#EF4444'; // destructive
+    if (percentage <= 70) return '#F97316'; // primary (orange)
+    return '#22D3EE'; // accent (cyan)
   };
 
   return (

@@ -24,7 +24,7 @@ export async function GET(
       .from('teardowns')
       .select('*, results:teardown_results(*)')
       .eq('id', id)
-      .single()) as { data: (Database['public']['Tables']['teardowns']['Row'] & { results: Database['public']['Tables']['teardown_results']['Row'][] | Database['public']['Tables']['teardown_results']['Row'] }) | null; error: any };
+      .single()) as { data: (Database['public']['Tables']['teardowns']['Row'] & { results: Database['public']['Tables']['teardown_results']['Row'][] | Database['public']['Tables']['teardown_results']['Row'] }) | null; error: unknown };
 
     if (error || !teardown) {
       return NextResponse.json<ErrorResponse>(

@@ -68,7 +68,7 @@ export function UrlInputForm() {
 
       // Redirect to teardown page
       router.push(`/teardown/${data.teardownId}`);
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please try again.');
       setLoading(false);
     }

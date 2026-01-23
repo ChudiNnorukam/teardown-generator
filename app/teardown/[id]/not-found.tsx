@@ -15,7 +15,7 @@ export default function NotFound() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Not Found</AlertTitle>
             <AlertDescription>
-              This analysis doesn't exist or has expired.
+              This analysis doesn&apos;t exist or has expired.
             </AlertDescription>
           </Alert>
 

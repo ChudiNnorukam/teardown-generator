@@ -1,11 +1,17 @@
 import { Clock, Loader2, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface TechStackPreview {
+  name: string;
+  category: string;
+  confidence: string;
+}
+
 interface AnalysisStepProps {
   step: string;
   status: 'pending' | 'in_progress' | 'complete' | 'error';
   message: string;
-  preview?: any;
+  preview?: TechStackPreview[];
 }
 
 const statusConfig = {

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2, Check } from 'lucide-react';
 
 export default function SignupPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -53,7 +51,7 @@ export default function SignupPage() {
 
       setSuccess(true);
       setLoading(false);
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred');
       setLoading(false);
     }
@@ -75,7 +73,7 @@ export default function SignupPage() {
         setError(error.message);
         setLoading(false);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred');
       setLoading(false);
     }
@@ -90,7 +88,7 @@ export default function SignupPage() {
             Check your email
           </CardTitle>
           <CardDescription>
-            We've sent you a confirmation link to verify your account.
+            We&apos;ve sent you a confirmation link to verify your account.
           </CardDescription>
         </CardHeader>
         <CardContent>

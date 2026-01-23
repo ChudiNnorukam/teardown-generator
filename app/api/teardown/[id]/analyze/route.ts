@@ -8,11 +8,17 @@ import { analyzeCloneEstimate } from '@/lib/analyzer/clone-estimate';
 import { createHash } from 'crypto';
 import type { Database } from '@/types/database';
 
+interface TechStackPreview {
+  name: string;
+  category: string;
+  confidence: string;
+}
+
 interface StreamMessage {
   step: string;
   status: 'in_progress' | 'complete' | 'failed';
   message: string;
-  preview?: any;
+  preview?: TechStackPreview[];
   teardownId?: string;
 }
 
@@ -70,7 +76,7 @@ export async function GET(
     .from('teardowns')
     .select('*')
     .eq('id', id)
-    .single()) as { data: Database['public']['Tables']['teardowns']['Row'] | null; error: any };
+    .single()) as { data: Database['public']['Tables']['teardowns']['Row'] | null; error: unknown };
 
   if (fetchError || !teardown) {
     return new Response(
@@ -93,8 +99,8 @@ export async function GET(
 
       try {
         // Step 1: Update status to processing
-        await (supabaseAdmin
-          .from('teardowns') as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('teardowns') as any)
           .update({ status: 'processing' })
           .eq('id', id);
 
@@ -179,6 +185,7 @@ export async function GET(
         // Step 7: Save results
         const htmlHash = createHash('sha256').update(html).digest('hex').substring(0, 16);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabaseAdmin.from('teardown_results') as any).insert({
           teardown_id: id,
           tech_stack: techStack,
@@ -188,8 +195,8 @@ export async function GET(
           raw_html_hash: htmlHash,
         });
 
-        await (supabaseAdmin
-          .from('teardowns') as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('teardowns') as any)
           .update({ status: 'completed' })
           .eq('id', id);
 
@@ -206,8 +213,8 @@ export async function GET(
         // Store full error internally for debugging
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-        await (supabaseAdmin
-          .from('teardowns') as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('teardowns') as any)
           .update({
             status: 'failed',
             error_message: errorMessage,

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -13,14 +13,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, Share, Check, X, Clock } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Share, Check, X } from 'lucide-react';
+import Image from 'next/image';
 import type { TeardownWithResults, CloneBreakdown } from '@/types/database';
+
+interface TechStackPreview {
+  name: string;
+  category: string;
+  confidence: string;
+}
 
 interface StreamMessage {
   step: string;
   status: 'in_progress' | 'complete' | 'failed';
   message: string;
-  preview?: any;
+  preview?: TechStackPreview[];
   teardownId?: string;
 }
 
@@ -33,7 +40,7 @@ type StepStatus = 'pending' | 'in_progress' | 'complete' | 'error';
 interface StepState {
   status: StepStatus;
   message: string;
-  preview?: any;
+  preview?: TechStackPreview[];
 }
 
 const STEPS = [
@@ -55,50 +62,7 @@ export default function TeardownPage({ params }: PageProps) {
     )
   );
 
-  // Fetch teardown data
-  useEffect(() => {
-    async function fetchTeardown() {
-      try {
-        const res = await fetch(`/api/teardown/${id}`);
-        if (!res.ok) {
-          if (res.status === 404) {
-            setError('Teardown not found');
-          } else {
-            setError('Failed to load teardown');
-          }
-          setLoading(false);
-          return;
-        }
-
-        const data = await res.json();
-        setTeardown(data.teardown);
-
-        // If already completed, show results immediately
-        if (data.teardown.status === 'completed') {
-          setLoading(false);
-          // Mark all steps as complete
-          setSteps(
-            Object.fromEntries(
-              STEPS.map(({ key }) => [key, { status: 'complete' as StepStatus, message: 'Done' }])
-            )
-          );
-        } else if (data.teardown.status === 'failed') {
-          setError(data.teardown.error_message || 'Analysis failed');
-          setLoading(false);
-        } else if (data.teardown.status === 'pending' || data.teardown.status === 'processing') {
-          // Start SSE stream
-          startAnalysis();
-        }
-      } catch (err) {
-        setError('Network error');
-        setLoading(false);
-      }
-    }
-
-    fetchTeardown();
-  }, [id]);
-
-  const startAnalysis = () => {
+  const startAnalysis = useCallback(() => {
     const eventSource = new EventSource(`/api/teardown/${id}/analyze`);
 
     eventSource.onmessage = (event) => {
@@ -140,7 +104,50 @@ export default function TeardownPage({ params }: PageProps) {
       setError('Connection lost. Please refresh the page.');
       setLoading(false);
     };
-  };
+  }, [id]);
+
+  // Fetch teardown data
+  useEffect(() => {
+    async function fetchTeardown() {
+      try {
+        const res = await fetch(`/api/teardown/${id}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('Teardown not found');
+          } else {
+            setError('Failed to load teardown');
+          }
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setTeardown(data.teardown);
+
+        // If already completed, show results immediately
+        if (data.teardown.status === 'completed') {
+          setLoading(false);
+          // Mark all steps as complete
+          setSteps(
+            Object.fromEntries(
+              STEPS.map(({ key }) => [key, { status: 'complete' as StepStatus, message: 'Done' }])
+            )
+          );
+        } else if (data.teardown.status === 'failed') {
+          setError(data.teardown.error_message || 'Analysis failed');
+          setLoading(false);
+        } else if (data.teardown.status === 'pending' || data.teardown.status === 'processing') {
+          // Start SSE stream
+          startAnalysis();
+        }
+      } catch (_err) {
+        setError('Network error');
+        setLoading(false);
+      }
+    }
+
+    fetchTeardown();
+  }, [id, startAnalysis]);
 
   const copyUrl = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -209,7 +216,7 @@ export default function TeardownPage({ params }: PageProps) {
 
           <div className="max-w-3xl mx-auto space-y-8">
             <div className="flex items-center gap-3">
-              {faviconUrl && <img src={faviconUrl} alt="" className="w-8 h-8" />}
+              {faviconUrl && <Image src={faviconUrl} alt="" className="w-8 h-8" width={32} height={32} unoptimized />}
               <div>
                 <h1 className="text-2xl font-bold">Analyzing...</h1>
                 <p className="text-muted-foreground">{teardown.target_url}</p>
@@ -279,7 +286,7 @@ export default function TeardownPage({ params }: PageProps) {
           {/* Results Header */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              {faviconUrl && <img src={faviconUrl} alt="" className="w-10 h-10" />}
+              {faviconUrl && <Image src={faviconUrl} alt="" className="w-10 h-10" width={40} height={40} unoptimized />}
               <div className="flex-1">
                 <h1 className="text-3xl font-bold">Analysis Complete</h1>
                 <p className="text-muted-foreground">{teardown.target_url}</p>

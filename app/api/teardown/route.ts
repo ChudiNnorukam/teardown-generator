@@ -1,7 +1,7 @@
 // POST /api/teardown - Submit a new teardown request
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, createServerClient } from '@/lib/supabase/server';
-import { validateAndNormalizeUrl, extractDomain } from '@/lib/url-utils';
+import { validateAndNormalizeUrl } from '@/lib/url-utils';
 import { checkRateLimit, incrementUsage } from '@/lib/rate-limit';
 import { randomBytes } from 'crypto';
 import type { Database } from '@/types/database';
@@ -150,8 +150,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new teardown record
-    const { data: teardown, error: insertError } = (await (supabaseAdmin
-      .from('teardowns') as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: teardown, error: insertError } = (await (supabaseAdmin.from('teardowns') as any)
       .insert({
         user_id: userId,
         session_id: sessionId,
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         status: 'pending',
       })
       .select('id')
-      .single()) as { data: Pick<Database['public']['Tables']['teardowns']['Row'], 'id'> | null; error: any };
+      .single()) as { data: Pick<Database['public']['Tables']['teardowns']['Row'], 'id'> | null; error: unknown };
 
     if (insertError || !teardown) {
       console.error('Failed to create teardown:', insertError);

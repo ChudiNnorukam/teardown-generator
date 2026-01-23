@@ -16,6 +16,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Link2, Sparkles, FileText, Check } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -47,7 +48,7 @@ export default function Home() {
 
             <div className="md:col-span-2 hidden md:block">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-500/20 blur-3xl -z-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 blur-3xl -z-10" />
                 <Card className="overflow-hidden shadow-2xl">
                   <CardContent className="p-6 space-y-4">
                     <div className="space-y-2">
@@ -56,16 +57,16 @@ export default function Home() {
                     </div>
                     <div className="flex gap-2">
                       <div className="h-6 bg-primary/20 rounded-full w-20" />
-                      <div className="h-6 bg-purple-500/20 rounded-full w-24" />
-                      <div className="h-6 bg-green-500/20 rounded-full w-16" />
+                      <div className="h-6 bg-accent/20 rounded-full w-24" />
+                      <div className="h-6 bg-emerald-500/20 rounded-full w-16" />
                     </div>
                     <div className="space-y-2 pt-4">
                       <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-600" />
+                        <Check className="w-4 h-4 text-accent" />
                         <div className="h-3 bg-muted rounded flex-1" />
                       </div>
                       <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-600" />
+                        <Check className="w-4 h-4 text-accent" />
                         <div className="h-3 bg-muted rounded flex-1" />
                       </div>
                     </div>
@@ -77,7 +78,7 @@ export default function Home() {
         </section>
 
         {/* Section 2: Social Proof Bar */}
-        <section className="bg-muted/30 py-8">
+        <section className="bg-card/50 border-y border-border py-8">
           <div className="container">
             <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 text-center">
               <div>
@@ -152,7 +153,7 @@ export default function Home() {
             headline="Know exactly what they're building with"
             body="Detect frameworks (Next.js, Nuxt, Rails), hosting (Vercel, AWS), auth providers (Clerk, Auth0), payment processors (Stripe, Paddle), and 50+ other technologies."
             visual={
-              <div className="grid grid-cols-3 gap-3 p-8 bg-muted/30 rounded-lg w-full max-w-md">
+              <div className="grid grid-cols-3 gap-3 p-8 bg-muted/50 rounded-lg w-full max-w-md">
                 <TechBadge name="Next.js" category="Framework" confidence="high" />
                 <TechBadge name="React" category="Framework" confidence="high" />
                 <TechBadge name="Tailwind" category="CSS" confidence="high" />
@@ -194,19 +195,19 @@ export default function Home() {
             headline="See their organic growth tactics"
             body="Full SEO audit including meta tags, heading structure, Open Graph setup, robots.txt, and sitemap analysis. Scored 0-100 with specific recommendations."
             visual={
-              <div className="flex flex-col items-center gap-6 p-8 bg-muted/30 rounded-lg">
+              <div className="flex flex-col items-center gap-6 p-8 bg-muted/50 rounded-lg">
                 <ScoreGauge score={85} label="SEO Score" size="lg" />
                 <div className="space-y-2 w-full">
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-600" />
+                    <Check className="w-4 h-4 text-accent" />
                     <span>Meta tags optimized</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-600" />
+                    <Check className="w-4 h-4 text-accent" />
                     <span>Mobile friendly</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-emerald-600" />
+                    <Check className="w-4 h-4 text-accent" />
                     <span>Fast page load</span>
                   </div>
                 </div>
@@ -249,7 +250,7 @@ export default function Home() {
         </section>
 
         {/* Section 5: Example Teardown */}
-        <section className="bg-muted/30 py-16 md:py-24">
+        <section className="bg-card/50 border-y border-border py-16 md:py-24">
           <div className="container">
             <div className="text-center mb-12 space-y-3">
               <h2 className="text-3xl md:text-4xl font-bold">See it in action</h2>
@@ -261,10 +262,13 @@ export default function Home() {
             <Card className="max-w-4xl mx-auto overflow-hidden shadow-2xl">
               <CardContent className="p-8 space-y-6">
                 <div className="flex items-center gap-3 pb-6 border-b">
-                  <img
+                  <Image
                     src="https://www.google.com/s2/favicons?domain=stripe.com&sz=32"
                     alt="Stripe"
                     className="w-8 h-8"
+                    width={32}
+                    height={32}
+                    unoptimized
                   />
                   <div>
                     <div className="font-semibold">stripe.com</div>
@@ -306,7 +310,7 @@ export default function Home() {
         <PricingSection />
 
         {/* Section 7: FAQ */}
-        <section className="bg-muted/30 py-16 md:py-24">
+        <section className="bg-card/50 border-y border-border py-16 md:py-24">
           <div className="container max-w-3xl">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold">Frequently Asked Questions</h2>
@@ -319,7 +323,7 @@ export default function Home() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
                   Yes. We only analyze publicly available information - the same data any visitor to
-                  the website can see. We don't bypass authentication, scrape private data, or
+                  the website can see. We don&apos;t bypass authentication, scrape private data, or
                   violate any terms of service.
                 </AccordionContent>
               </AccordionItem>
@@ -340,7 +344,7 @@ export default function Home() {
                   Can I analyze my competitors?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Absolutely. That's the main use case. Understand what technologies your
+                  Absolutely. That&apos;s the main use case. Understand what technologies your
                   competitors use, how they price, and what their SEO strategy looks like.
                 </AccordionContent>
               </AccordionItem>
@@ -350,7 +354,7 @@ export default function Home() {
                   What if a site blocks the analysis?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Some sites block automated access. If we can't fetch a site, we'll let you know.
+                  Some sites block automated access. If we can&apos;t fetch a site, we&apos;ll let you know.
                   Most marketing sites and landing pages work fine.
                 </AccordionContent>
               </AccordionItem>
@@ -371,7 +375,7 @@ export default function Home() {
                   Will you add more features?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Yes! We're working on: historical tracking, API access, team sharing, and custom
+                  Yes! We&apos;re working on: historical tracking, API access, team sharing, and custom
                   reports. Pro subscribers get early access to new features.
                 </AccordionContent>
               </AccordionItem>
@@ -380,13 +384,13 @@ export default function Home() {
         </section>
 
         {/* Section 8: Final CTA */}
-        <section id="hero" className="bg-slate-900 text-white py-16 md:py-24">
+        <section id="hero" className="bg-card border-t border-border py-16 md:py-24">
           <div className="container text-center space-y-8">
             <div className="space-y-4 max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-5xl font-bold">
                 Ready to reverse-engineer the competition?
               </h2>
-              <p className="text-xl text-slate-300">
+              <p className="text-xl text-muted-foreground">
                 Start with 3 free analyses. No signup required.
               </p>
             </div>

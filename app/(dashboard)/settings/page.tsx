@@ -10,26 +10,28 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Check } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
 
 export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [plan, setPlan] = useState<'free' | 'pro'>('free');
   const [upgrading, setUpgrading] = useState(false);
   const [managingSubscription, setManagingSubscription] = useState(false);
-  const [showUpgraded, setShowUpgraded] = useState(false);
+  const [showUpgraded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('upgraded') === 'true') {
+        window.history.replaceState({}, '', '/settings');
+        return true;
+      }
+    }
+    return false;
+  });
   const supabase = createClient();
 
   useEffect(() => {
-    // Check for upgraded parameter
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('upgraded') === 'true') {
-      setShowUpgraded(true);
-      // Clean up URL
-      window.history.replaceState({}, '', '/settings');
-    }
-
     // Check auth and get user plan
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -67,7 +69,7 @@ export default function SettingsPage() {
       } else {
         setUpgrading(false);
       }
-    } catch (error) {
+    } catch (_error) {
       setUpgrading(false);
     }
   };
@@ -87,7 +89,7 @@ export default function SettingsPage() {
       } else {
         setManagingSubscription(false);
       }
-    } catch (error) {
+    } catch (_error) {
       setManagingSubscription(false);
     }
   };

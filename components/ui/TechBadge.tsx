@@ -7,16 +7,17 @@ interface TechBadgeProps {
   confidence: 'high' | 'medium' | 'low';
 }
 
+// Design system colors: primary (orange) and accent (cyan)
 const categoryColors: Record<string, string> = {
-  Framework: 'bg-blue-100 text-blue-700 border-blue-300',
-  CSS: 'bg-purple-100 text-purple-700 border-purple-300',
-  Hosting: 'bg-green-100 text-green-700 border-green-300',
-  Auth: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-  Analytics: 'bg-orange-100 text-orange-700 border-orange-300',
-  Payments: 'bg-pink-100 text-pink-700 border-pink-300',
-  Backend: 'bg-indigo-100 text-indigo-700 border-indigo-300',
-  CDN: 'bg-cyan-100 text-cyan-700 border-cyan-300',
-  Database: 'bg-teal-100 text-teal-700 border-teal-300',
+  Framework: 'bg-primary/10 text-primary border-primary/30',
+  CSS: 'bg-accent/10 text-accent border-accent/30',
+  Hosting: 'bg-primary/10 text-primary border-primary/30',
+  Auth: 'bg-accent/10 text-accent border-accent/30',
+  Analytics: 'bg-primary/10 text-primary border-primary/30',
+  Payments: 'bg-accent/10 text-accent border-accent/30',
+  Backend: 'bg-primary/10 text-primary border-primary/30',
+  CDN: 'bg-accent/10 text-accent border-accent/30',
+  Database: 'bg-primary/10 text-primary border-primary/30',
 };
 
 const confidenceStyles: Record<string, string> = {

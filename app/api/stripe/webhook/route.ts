@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
 
         if (userId) {
           // Update user to Pro plan
-          await (supabaseAdmin
-            .from('usage_tracking') as any)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabaseAdmin.from('usage_tracking') as any)
             .update({
               plan: 'pro',
               subscription_id: session.subscription as string,
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
 
         if (tracking?.user_id) {
           // Downgrade to free plan
-          await (supabaseAdmin
-            .from('usage_tracking') as any)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabaseAdmin.from('usage_tracking') as any)
             .update({
               plan: 'free',
               subscription_id: null,
@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
         if (tracking?.user_id) {
           // Check if subscription is canceled or past_due
           if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
-            await (supabaseAdmin
-              .from('usage_tracking') as any)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabaseAdmin.from('usage_tracking') as any)
               .update({
                 plan: 'free',
                 subscription_id: null,

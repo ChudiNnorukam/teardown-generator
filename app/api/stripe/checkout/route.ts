@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
       customerId = customer.id;
 
       // Store customer ID
-      await (supabaseAdmin
-        .from('usage_tracking') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin.from('usage_tracking') as any)
         .update({ stripe_customer_id: customerId })
         .eq('user_id', userId);
     }

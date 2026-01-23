@@ -7,10 +7,11 @@ import { PricingTierCard } from '@/components/ui/PricingTierCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
 
 export function PricingSection() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [plan, setPlan] = useState<'free' | 'pro' | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
@@ -73,7 +74,7 @@ export function PricingSection() {
       } else {
         setUpgrading(false);
       }
-    } catch (error) {
+    } catch (_error) {
       setUpgrading(false);
     }
   };

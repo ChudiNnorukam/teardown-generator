@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
 
       setSuccess(true);
       setLoading(false);
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred');
       setLoading(false);
     }
@@ -49,12 +49,12 @@ export default function ForgotPasswordPage() {
             Check your email
           </CardTitle>
           <CardDescription>
-            We've sent you a password reset link.
+            We&apos;ve sent you a password reset link.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            If an account exists with {email}, you'll receive an email with instructions to reset your password.
+            If an account exists with {email}, you&apos;ll receive an email with instructions to reset your password.
           </p>
           <Button asChild variant="outline" className="w-full">
             <Link href="/login">Back to login</Link>
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
       <CardHeader>
         <CardTitle>Forgot password?</CardTitle>
         <CardDescription>
-          Enter your email and we'll send you a reset link
+          Enter your email and we&apos;ll send you a reset link
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -68,15 +68,15 @@ export async function analyzeTeardown(teardownId: string): Promise<void> {
       .from('teardowns')
       .select('*')
       .eq('id', teardownId)
-      .single()) as { data: Database['public']['Tables']['teardowns']['Row'] | null; error: any };
+      .single()) as { data: Database['public']['Tables']['teardowns']['Row'] | null; error: unknown };
 
     if (fetchError || !teardown) {
       throw new Error(`Teardown not found: ${teardownId}`);
     }
 
     // Update status to processing
-    await (supabaseAdmin
-      .from('teardowns') as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin.from('teardowns') as any)
       .update({ status: 'processing' })
       .eq('id', teardownId);
 
@@ -100,6 +100,7 @@ export async function analyzeTeardown(teardownId: string): Promise<void> {
 
     // Save results to database
     console.log('Saving results...');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: resultsError } = await (supabaseAdmin.from('teardown_results') as any).insert({
       teardown_id: teardownId,
       tech_stack: techStack,
@@ -114,8 +115,8 @@ export async function analyzeTeardown(teardownId: string): Promise<void> {
     }
 
     // Update teardown status to completed
-    await (supabaseAdmin
-      .from('teardowns') as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin.from('teardowns') as any)
       .update({ status: 'completed' })
       .eq('id', teardownId);
 
@@ -126,8 +127,8 @@ export async function analyzeTeardown(teardownId: string): Promise<void> {
     // Update teardown status to failed
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    await (supabaseAdmin
-      .from('teardowns') as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin.from('teardowns') as any)
       .update({
         status: 'failed',
         error_message: errorMessage,
