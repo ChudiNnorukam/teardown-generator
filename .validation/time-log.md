@@ -11,16 +11,18 @@
 
 ### Phase 0: Pre-Flight Setup
 - **Start:** 2026-01-21 16:45
-- **End:** TBD
-- **Duration:** TBD
+- **End:** 2026-01-21 (continued session)
+- **Duration:** ~50 minutes (estimated, includes friction troubleshooting)
 - **Tasks:**
   - [x] Friction Point #1 discovered and logged (compressed .skill format)
   - [x] Manual Next.js 14 scaffolding
   - [x] shadcn/ui installation
   - [x] Supabase client setup
   - [x] Initial project structure
-  - [ ] Credential provisioning (service-provisioner)
-  - [ ] Environment generation (env-orchestrator)
+  - [x] Credential provisioning (clipboard + vault workflow)
+  - [x] microsaasbot CLI implementation
+  - [x] Environment generation (.env.local created and verified)
+  - [x] Dev server validation (Next.js starts successfully)
 
 ### Phase 1: Core Functionality
 - **Start:** TBD
