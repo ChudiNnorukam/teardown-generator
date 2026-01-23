@@ -1,4 +1,4 @@
-import { createServerClient, serializeCookieHeader } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
@@ -17,12 +17,15 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors from provider
   if (errorParam) {
+    console.error('[callback] OAuth error:', errorParam, errorDescription);
     const errorMsg = encodeURIComponent(errorDescription || errorParam);
     return NextResponse.redirect(`${origin}/login?error=${errorMsg}`);
   }
 
   if (code) {
-    // Determine redirect URL based on environment
+    console.log('[callback] Starting with code:', code.slice(0, 10) + '...');
+
+    // Determine redirect URL - handle Vercel preview deployments
     const forwardedHost = request.headers.get('x-forwarded-host');
     const isLocalEnv = process.env.NODE_ENV === 'development';
     let redirectUrl: string;
@@ -35,10 +38,10 @@ export async function GET(request: NextRequest) {
       redirectUrl = `${origin}${next}`;
     }
 
-    // Collect Set-Cookie headers
-    const cookieHeaders: string[] = [];
+    // Create response FIRST (per Supabase SSR documentation)
+    const response = NextResponse.redirect(redirectUrl);
 
-    // Create Supabase client with manual cookie header serialization
+    // Create Supabase client with cookie handlers that set on the response
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -48,35 +51,29 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
+            // Set cookies directly on the response object
             cookiesToSet.forEach(({ name, value, options }) => {
-              // Manually serialize the cookie header
-              const header = serializeCookieHeader(name, value, options);
-              cookieHeaders.push(header);
+              response.cookies.set(name, value, options);
             });
           },
         },
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error('Auth callback error:', error.message);
+      console.error('[callback] Exchange error:', error.message);
       const errorMsg = encodeURIComponent(error.message);
       return NextResponse.redirect(`${origin}/login?error=${errorMsg}`);
     }
 
-    // Create redirect response
-    const response = NextResponse.redirect(redirectUrl);
+    console.log('[callback] Session created for:', data.user?.email);
 
-    // Manually add all Set-Cookie headers
-    cookieHeaders.forEach((header) => {
-      response.headers.append('Set-Cookie', header);
-    });
-
+    // Return response WITH cookies attached
     return response;
   }
 
-  // Return to login with error
+  console.error('[callback] No code provided');
   return NextResponse.redirect(`${origin}/login?error=no_code`);
 }
