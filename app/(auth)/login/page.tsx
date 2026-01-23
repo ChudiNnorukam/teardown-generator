@@ -37,7 +37,7 @@ export default function LoginPage() {
 
       router.push('/');
       router.refresh();
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred');
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function LoginPage() {
         setError(error.message);
         setLoading(false);
       }
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred');
       setLoading(false);
     }

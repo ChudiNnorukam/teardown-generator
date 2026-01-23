@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
 
       setSuccess(true);
       setLoading(false);
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred');
       setLoading(false);
     }

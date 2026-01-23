@@ -29,20 +29,36 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.userId;
+        const customerId = session.customer as string | null;
 
-        if (userId) {
-          // Update user to Pro plan
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabaseAdmin.from('usage_tracking') as any)
-            .update({
-              plan: 'pro',
-              subscription_id: session.subscription as string,
-            })
-            .eq('user_id', userId);
-
-          console.log(`User ${userId} upgraded to Pro`);
+        if (!customerId) {
+          console.error('Checkout session missing customer ID');
+          break;
         }
+
+        const { data: tracking } = (await supabaseAdmin
+          .from('usage_tracking')
+          .select('user_id')
+          .eq('stripe_customer_id', customerId)
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id'> | null };
+
+        if (!tracking?.user_id) {
+          console.error(`No usage tracking found for customer ${customerId}`);
+          break;
+        }
+
+        // Update user to Pro plan
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('usage_tracking') as any)
+          .update({
+            plan: 'pro',
+            subscription_id: session.subscription as string,
+          })
+          .eq('user_id', tracking.user_id);
+
+        console.log(`User ${tracking.user_id} upgraded to Pro`);
         break;
       }
 
@@ -55,7 +71,9 @@ export async function POST(request: NextRequest) {
           .from('usage_tracking')
           .select('user_id')
           .eq('stripe_customer_id', customerId)
-          .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id'> | null };
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id'> | null };
 
         if (tracking?.user_id) {
           // Downgrade to free plan
@@ -81,7 +99,9 @@ export async function POST(request: NextRequest) {
           .from('usage_tracking')
           .select('user_id')
           .eq('stripe_customer_id', customerId)
-          .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id'> | null };
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id'> | null };
 
         if (tracking?.user_id) {
           // Check if subscription is canceled or past_due

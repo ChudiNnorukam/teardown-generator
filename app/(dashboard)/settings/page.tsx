@@ -69,7 +69,7 @@ export default function SettingsPage() {
       } else {
         setUpgrading(false);
       }
-    } catch (_error) {
+    } catch {
       setUpgrading(false);
     }
   };
@@ -89,7 +89,7 @@ export default function SettingsPage() {
       } else {
         setManagingSubscription(false);
       }
-    } catch (_error) {
+    } catch {
       setManagingSubscription(false);
     }
   };

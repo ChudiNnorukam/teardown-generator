@@ -24,7 +24,9 @@ export async function GET() {
       .from('usage_tracking')
       .select('plan')
       .eq('user_id', userId)
-      .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'plan'> | null };
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'plan'> | null };
 
     return NextResponse.json({
       plan: tracking?.plan || 'free',

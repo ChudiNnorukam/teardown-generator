@@ -1,6 +1,7 @@
 // GET /api/teardown/[id] - Get teardown status and results
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { authorizeTeardownAccess } from '@/lib/teardown-access';
 import type { TeardownWithResults, Database } from '@/types/database';
 
 interface TeardownStatusResponse {
@@ -33,6 +34,18 @@ export async function GET(
           message: 'Teardown not found',
         },
         { status: 404 }
+      );
+    }
+
+    const access = await authorizeTeardownAccess(request, teardown);
+
+    if (!access.authorized) {
+      return NextResponse.json<ErrorResponse>(
+        {
+          error: access.reason === 'unauthorized' ? 'unauthorized' : 'forbidden',
+          message: 'Not authorized to access this teardown',
+        },
+        { status: access.reason === 'unauthorized' ? 401 : 403 }
       );
     }
 

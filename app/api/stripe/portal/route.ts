@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
       .from('usage_tracking')
       .select('stripe_customer_id')
       .eq('user_id', userId)
-      .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'stripe_customer_id'> | null };
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'stripe_customer_id'> | null };
 
     if (!tracking?.stripe_customer_id) {
       return NextResponse.json(

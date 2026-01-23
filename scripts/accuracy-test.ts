@@ -210,7 +210,7 @@ async function testSite(site: GroundTruth): Promise<TestResult> {
     console.log(`Testing ${site.name} (${site.url})...`);
 
     const { html, headers } = await fetchWithTimeout(site.url);
-    const techStack = await analyzeTechStack(html, headers);
+    const techStack = await analyzeTechStack(html, headers, site.url);
     const detected = techStack.map(t => t.name);
 
     // Calculate accuracy metrics

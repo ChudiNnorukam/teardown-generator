@@ -24,9 +24,13 @@ export async function POST(request: NextRequest) {
     // Get or create Stripe customer
     const { data: tracking } = (await supabaseAdmin
       .from('usage_tracking')
-      .select('stripe_customer_id')
+      .select('id, stripe_customer_id')
       .eq('user_id', userId)
-      .single()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'stripe_customer_id'> | null };
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle()) as {
+      data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'stripe_customer_id'> | null;
+    };
 
     let customerId = tracking?.stripe_customer_id;
 
@@ -41,11 +45,23 @@ export async function POST(request: NextRequest) {
 
       customerId = customer.id;
 
-      // Store customer ID
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseAdmin.from('usage_tracking') as any)
-        .update({ stripe_customer_id: customerId })
-        .eq('user_id', userId);
+      if (tracking?.id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('usage_tracking') as any)
+          .update({ stripe_customer_id: customerId })
+          .eq('id', tracking.id);
+      } else {
+        const today = new Date().toISOString().split('T')[0];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('usage_tracking') as any).insert({
+          user_id: userId,
+          date: today,
+          teardown_count: 0,
+          plan: 'free',
+          stripe_customer_id: customerId,
+        });
+      }
     }
 
     // Create Checkout Session

@@ -90,7 +90,7 @@ export async function analyzeTeardown(teardownId: string): Promise<void> {
     // Run analyzers in parallel
     console.log('Running analyzers...');
     const [techStack, pricing, seo] = await Promise.all([
-      analyzeTechStack(html, headers),
+      analyzeTechStack(html, headers, teardown.target_url),
       analyzePricing(html, teardown.target_url),
       analyzeSEO(html, teardown.target_url),
     ]);
