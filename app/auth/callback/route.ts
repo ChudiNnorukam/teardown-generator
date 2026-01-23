@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
       redirectUrl = `${origin}${next}`;
     }
 
-    // Create response first - we'll add cookies to it
+    // Use middleware-style pattern: response gets recreated in setAll
     let response = NextResponse.redirect(redirectUrl);
 
-    // Create Supabase client with cookie handlers that work with our response
+    // Create Supabase client following the middleware pattern exactly
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -48,7 +48,13 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            // Set cookies on the response object
+            // First set on request (for any subsequent reads)
+            cookiesToSet.forEach(({ name, value }) => {
+              request.cookies.set(name, value);
+            });
+            // Recreate response to ensure cookies are attached
+            response = NextResponse.redirect(redirectUrl);
+            // Set cookies on the new response
             cookiesToSet.forEach(({ name, value, options }) => {
               response.cookies.set(name, value, options);
             });
@@ -65,7 +71,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=${errorMsg}`);
     }
 
-    // Return the response with cookies set
+    // Return the response (which may have been recreated with cookies in setAll)
     return response;
   }
 
