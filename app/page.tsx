@@ -243,6 +243,9 @@ export default function Home() {
                     <span>Total Estimate</span>
                     <span className="text-primary">70h</span>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    *MVP estimate for experienced developer. Production: 3-5x
+                  </p>
                 </CardContent>
               </Card>
             }

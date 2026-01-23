@@ -140,7 +140,7 @@ export default function TeardownPage({ params }: PageProps) {
           // Start SSE stream
           startAnalysis();
         }
-      } catch (_err) {
+      } catch {
         setError('Network error');
         setLoading(false);
       }
@@ -467,6 +467,16 @@ export default function TeardownPage({ params }: PageProps) {
 
             {/* Clone Estimate Tab */}
             <TabsContent value="clone" className="space-y-6">
+              {/* Important Disclaimer */}
+              <Alert className="border-yellow-500/50 bg-yellow-500/10">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                <AlertTitle className="text-yellow-500">MVP Estimate Only</AlertTitle>
+                <AlertDescription className="text-muted-foreground">
+                  This estimate assumes an <strong>experienced full-stack developer</strong> building a <strong>minimum viable product</strong>.
+                  For production-ready quality with testing, documentation, and polish, multiply by 3-5x.
+                </AlertDescription>
+              </Alert>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -475,11 +485,43 @@ export default function TeardownPage({ params }: PageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Complexity with explanation */}
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Complexity</h3>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary capitalize">
-                      {results.clone_estimate?.complexity}
-                    </span>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Complexity Level</h3>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary capitalize">
+                        {results.clone_estimate?.complexity}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {results.clone_estimate?.complexity === 'simple' && '(Basic functionality, minimal integrations)'}
+                        {results.clone_estimate?.complexity === 'moderate' && '(Multiple features, some integrations)'}
+                        {results.clone_estimate?.complexity === 'complex' && '(Advanced features, many integrations)'}
+                        {results.clone_estimate?.complexity === 'very-complex' && '(Enterprise-grade, extensive integrations)'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Production-Ready Estimate */}
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <h3 className="font-semibold mb-2">Production-Ready Estimates</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">MVP (this estimate)</p>
+                        <p className="font-bold text-lg">{totalHours}h</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">With testing &amp; docs</p>
+                        <p className="font-bold text-lg">{Math.round(totalHours * 2)}h</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Production quality</p>
+                        <p className="font-bold text-lg">{Math.round(totalHours * 3)}-{Math.round(totalHours * 4)}h</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Enterprise-grade</p>
+                        <p className="font-bold text-lg">{Math.round(totalHours * 5)}h+</p>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
