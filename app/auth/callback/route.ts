@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const errorParam = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
+  const debug = searchParams.get('debug');
 
   // if "next" is in param, use it as the redirect URL
   let next = searchParams.get('next') ?? '/';
@@ -35,6 +36,10 @@ export async function GET(request: NextRequest) {
       redirectUrl = `${origin}${next}`;
     }
 
+    // Debug: track what setAll receives
+    let setAllCalled = false;
+    let cookiesReceived: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+
     // Use middleware-style pattern: response gets recreated in setAll
     let response = NextResponse.redirect(redirectUrl);
 
@@ -48,6 +53,9 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
+            setAllCalled = true;
+            cookiesReceived = cookiesToSet.map(c => ({ ...c, options: c.options || {} }));
+
             // First set on request (for any subsequent reads)
             cookiesToSet.forEach(({ name, value }) => {
               request.cookies.set(name, value);
@@ -63,7 +71,18 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    // Debug mode: return JSON instead of redirect
+    if (debug === 'true') {
+      return NextResponse.json({
+        setAllCalled,
+        cookiesReceived: cookiesReceived.map(c => ({ name: c.name, hasValue: !!c.value, options: c.options })),
+        exchangeError: error?.message || null,
+        hasSession: !!data?.session,
+        redirectUrl,
+      });
+    }
 
     if (error) {
       console.error('Auth callback error:', error.message);
