@@ -51,8 +51,9 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            // Set cookies directly on the response object
+            console.log('[callback] setAll called with', cookiesToSet.length, 'cookies');
             cookiesToSet.forEach(({ name, value, options }) => {
+              console.log('[callback] Setting cookie:', name, 'options:', JSON.stringify(options));
               response.cookies.set(name, value, options);
             });
           },
@@ -69,6 +70,11 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[callback] Session created for:', data.user?.email);
+
+    // Log the cookies that will be sent
+    const setCookieHeaders = response.headers.getSetCookie();
+    console.log('[callback] Set-Cookie headers count:', setCookieHeaders.length);
+    setCookieHeaders.forEach((h, i) => console.log(`[callback] Cookie ${i}:`, h.substring(0, 100)));
 
     // Return response WITH cookies attached
     return response;
