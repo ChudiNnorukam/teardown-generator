@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, serializeCookieHeader } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const errorParam = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
-  const debug = searchParams.get('debug');
 
   // if "next" is in param, use it as the redirect URL
   let next = searchParams.get('next') ?? '/';
@@ -36,14 +35,10 @@ export async function GET(request: NextRequest) {
       redirectUrl = `${origin}${next}`;
     }
 
-    // Debug: track what setAll receives
-    let setAllCalled = false;
-    let cookiesReceived: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+    // Collect Set-Cookie headers
+    const cookieHeaders: string[] = [];
 
-    // Use middleware-style pattern: response gets recreated in setAll
-    let response = NextResponse.redirect(redirectUrl);
-
-    // Create Supabase client following the middleware pattern exactly
+    // Create Supabase client with manual cookie header serialization
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -53,36 +48,17 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            setAllCalled = true;
-            cookiesReceived = cookiesToSet.map(c => ({ ...c, options: c.options || {} }));
-
-            // First set on request (for any subsequent reads)
-            cookiesToSet.forEach(({ name, value }) => {
-              request.cookies.set(name, value);
-            });
-            // Recreate response to ensure cookies are attached
-            response = NextResponse.redirect(redirectUrl);
-            // Set cookies on the new response
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
+              // Manually serialize the cookie header
+              const header = serializeCookieHeader(name, value, options);
+              cookieHeaders.push(header);
             });
           },
         },
       }
     );
 
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-    // Debug mode: return JSON instead of redirect
-    if (debug === 'true') {
-      return NextResponse.json({
-        setAllCalled,
-        cookiesReceived: cookiesReceived.map(c => ({ name: c.name, hasValue: !!c.value, options: c.options })),
-        exchangeError: error?.message || null,
-        hasSession: !!data?.session,
-        redirectUrl,
-      });
-    }
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
       console.error('Auth callback error:', error.message);
@@ -90,7 +66,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=${errorMsg}`);
     }
 
-    // Return the response (which may have been recreated with cookies in setAll)
+    // Create redirect response
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Manually add all Set-Cookie headers
+    cookieHeaders.forEach((header) => {
+      response.headers.append('Set-Cookie', header);
+    });
+
     return response;
   }
 
