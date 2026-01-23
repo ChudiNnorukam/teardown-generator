@@ -23,8 +23,12 @@ export default function LoginPage() {
   // Check for auth errors in URL (from callback)
   useEffect(() => {
     const urlError = searchParams.get('error');
-    if (urlError === 'auth_failed') {
-      setError('Authentication failed. Please try again.');
+    if (urlError) {
+      // Decode the error message if it was URL encoded
+      const decodedError = decodeURIComponent(urlError);
+      setError(decodedError === 'auth_failed' || decodedError === 'no_code'
+        ? 'Authentication failed. Please try again.'
+        : `Authentication error: ${decodedError}`);
     }
   }, [searchParams]);
 
