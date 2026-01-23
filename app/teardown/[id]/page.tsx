@@ -13,7 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, Share, Check, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Share, Check, X, Download, Loader2 } from 'lucide-react';
+import { exportTeardownToPDF } from '@/lib/pdf-export';
 import Image from 'next/image';
 import type { TeardownWithResults, CloneBreakdown } from '@/types/database';
 
@@ -56,6 +57,7 @@ export default function TeardownPage({ params }: PageProps) {
   const [teardown, setTeardown] = useState<TeardownWithResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [steps, setSteps] = useState<Record<string, StepState>>(() =>
     Object.fromEntries(
       STEPS.map(({ key }) => [key, { status: 'pending' as StepStatus, message: 'Waiting...' }])
@@ -151,6 +153,18 @@ export default function TeardownPage({ params }: PageProps) {
 
   const copyUrl = () => {
     navigator.clipboard.writeText(window.location.href);
+  };
+
+  const handleExportPdf = async () => {
+    if (!teardown) return;
+    setExportingPdf(true);
+    try {
+      await exportTeardownToPDF({ teardown });
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const getFaviconUrl = (url: string) => {
@@ -305,6 +319,14 @@ export default function TeardownPage({ params }: PageProps) {
               <Button variant="outline" onClick={copyUrl}>
                 <Share className="w-4 h-4 mr-2" />
                 Share
+              </Button>
+              <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
+                {exportingPdf ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                {exportingPdf ? 'Exporting...' : 'Download PDF'}
               </Button>
               <Button asChild>
                 <Link href="/">Analyze Another</Link>
