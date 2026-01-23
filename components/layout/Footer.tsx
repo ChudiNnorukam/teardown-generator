@@ -9,6 +9,12 @@ export function Footer() {
           {/* Links Row */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm">
             <Link
+              href="/about"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              About
+            </Link>
+            <Link
               href="/privacy"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -21,7 +27,7 @@ export function Footer() {
               Terms of Service
             </Link>
             <Link
-              href="mailto:support@teardown.dev"
+              href="mailto:chudi@teardown.dev"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Contact
@@ -35,7 +41,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <Link
-                href="https://twitter.com"
+                href="https://twitter.com/chaborukam"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -44,7 +50,7 @@ export function Footer() {
                 <Twitter className="h-5 w-5" />
               </Link>
               <Link
-                href="https://github.com"
+                href="https://github.com/ChudiNnorukam"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
