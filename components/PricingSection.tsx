@@ -141,7 +141,8 @@ export function PricingSection() {
               <Button
                 onClick={handleProClick}
                 disabled={plan === 'pro' || upgrading || loading}
-                className="w-full"
+                size="lg"
+                className="w-full h-12"
               >
                 {getProButtonIcon()}
                 {getProButtonText()}
