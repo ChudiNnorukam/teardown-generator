@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -20,17 +20,17 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  // Check for auth errors in URL (from callback)
-  useEffect(() => {
-    const urlError = searchParams.get('error');
-    if (urlError) {
-      // Decode the error message if it was URL encoded
-      const decodedError = decodeURIComponent(urlError);
-      setError(decodedError === 'auth_failed' || decodedError === 'no_code'
-        ? 'Authentication failed. Please try again.'
-        : `Authentication error: ${decodedError}`);
-    }
+  // Compute URL error from search params (avoids setState in useEffect)
+  const urlError = useMemo(() => {
+    const errorParam = searchParams.get('error');
+    if (!errorParam) return null;
+    const decodedError = decodeURIComponent(errorParam);
+    return decodedError === 'auth_failed' || decodedError === 'no_code'
+      ? 'Authentication failed. Please try again.'
+      : `Authentication error: ${decodedError}`;
   }, [searchParams]);
+
+  const displayError = error || urlError;
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,10 +128,10 @@ function LoginForm() {
             </Link>
           </div>
 
-          {error && (
+          {displayError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{displayError}</AlertDescription>
             </Alert>
           )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -21,13 +21,13 @@ function SignupForm() {
   const [success, setSuccess] = useState(false);
   const supabase = createClient();
 
-  // Check for auth errors in URL (from callback)
-  useEffect(() => {
-    const urlError = searchParams.get('error');
-    if (urlError === 'auth_failed') {
-      setError('Authentication failed. Please try again.');
-    }
+  // Compute URL error from search params (avoids setState in useEffect)
+  const urlError = useMemo(() => {
+    const errorParam = searchParams.get('error');
+    return errorParam === 'auth_failed' ? 'Authentication failed. Please try again.' : null;
   }, [searchParams]);
+
+  const displayError = error || urlError;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,10 +165,10 @@ function SignupForm() {
             />
           </div>
 
-          {error && (
+          {displayError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{displayError}</AlertDescription>
             </Alert>
           )}
 
