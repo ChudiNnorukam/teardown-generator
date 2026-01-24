@@ -17,14 +17,12 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors from provider
   if (errorParam) {
-    console.error('[callback] OAuth error:', errorParam, errorDescription);
+    console.error('[auth/callback] OAuth error:', errorParam, errorDescription);
     const errorMsg = encodeURIComponent(errorDescription || errorParam);
     return NextResponse.redirect(`${origin}/login?error=${errorMsg}`);
   }
 
   if (code) {
-    console.log('[callback] Starting with code:', code.slice(0, 10) + '...');
-
     // Determine redirect URL - handle Vercel preview deployments
     const forwardedHost = request.headers.get('x-forwarded-host');
     const isLocalEnv = process.env.NODE_ENV === 'development';
@@ -51,9 +49,7 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            console.log('[callback] setAll called with', cookiesToSet.length, 'cookies');
             cookiesToSet.forEach(({ name, value, options }) => {
-              console.log('[callback] Setting cookie:', name);
               response.cookies.set(name, value, options);
             });
           },
@@ -64,33 +60,23 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error('[callback] Exchange error:', error.message);
+      console.error('[auth/callback] Exchange error:', error.message);
       const errorMsg = encodeURIComponent(error.message);
       return NextResponse.redirect(`${origin}/login?error=${errorMsg}`);
     }
 
-    console.log('[callback] Session created for:', data.user?.email);
-
-    // WORKAROUND: Since setAll is not being called by exchangeCodeForSession,
-    // we need to manually set the session. Call setSession which should trigger setAll.
+    // IMPORTANT: exchangeCodeForSession does not call setAll to persist cookies.
+    // We must explicitly call setSession to trigger cookie persistence.
     if (data.session) {
-      console.log('[callback] Manually setting session to trigger cookie persistence');
-      const { error: setError } = await supabase.auth.setSession({
+      await supabase.auth.setSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
       });
-      if (setError) {
-        console.error('[callback] setSession error:', setError.message);
-      }
     }
-
-    // Log final cookie count
-    const setCookieHeaders = response.headers.getSetCookie();
-    console.log('[callback] Final Set-Cookie headers count:', setCookieHeaders.length);
 
     return response;
   }
 
-  console.error('[callback] No code provided');
+  console.error('[auth/callback] No code provided');
   return NextResponse.redirect(`${origin}/login?error=no_code`);
 }
