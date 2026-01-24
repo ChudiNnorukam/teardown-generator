@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
+import type { CookieOptions } from '@supabase/ssr';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -38,10 +39,10 @@ export async function GET(request: NextRequest) {
       redirectUrl = `${origin}${next}`;
     }
 
-    // Create response FIRST (per Supabase SSR documentation)
-    const response = NextResponse.redirect(redirectUrl);
+    // Collect cookies to set on response
+    const cookiesToSet: { name: string; value: string; options: CookieOptions }[] = [];
 
-    // Create Supabase client with cookie handlers that set on the response
+    // Create Supabase client that collects cookies
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -50,11 +51,11 @@ export async function GET(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
-            console.log('[callback] setAll called with', cookiesToSet.length, 'cookies');
-            cookiesToSet.forEach(({ name, value, options }) => {
-              console.log('[callback] Setting cookie:', name, 'options:', JSON.stringify(options));
-              response.cookies.set(name, value, options);
+          setAll(cookies) {
+            console.log('[callback] setAll called with', cookies.length, 'cookies');
+            cookies.forEach(({ name, value, options }) => {
+              console.log('[callback] Collecting cookie:', name);
+              cookiesToSet.push({ name, value, options });
             });
           },
         },
@@ -70,13 +71,20 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[callback] Session created for:', data.user?.email);
+    console.log('[callback] Cookies collected so far:', cookiesToSet.length);
 
-    // Log the cookies that will be sent
+    // Create response and set all collected cookies
+    const response = NextResponse.redirect(redirectUrl);
+
+    cookiesToSet.forEach(({ name, value, options }) => {
+      console.log('[callback] Setting cookie on response:', name);
+      response.cookies.set(name, value, options);
+    });
+
+    // Log final cookie count
     const setCookieHeaders = response.headers.getSetCookie();
-    console.log('[callback] Set-Cookie headers count:', setCookieHeaders.length);
-    setCookieHeaders.forEach((h, i) => console.log(`[callback] Cookie ${i}:`, h.substring(0, 100)));
+    console.log('[callback] Final Set-Cookie headers count:', setCookieHeaders.length);
 
-    // Return response WITH cookies attached
     return response;
   }
 
