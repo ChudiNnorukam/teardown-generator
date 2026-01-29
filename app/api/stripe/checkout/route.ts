@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, supabaseAdmin } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
+import { validateCSRF } from '@/lib/csrf';
 import type { Database } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: CSRF protection
+    if (!validateCSRF(request)) {
+      return NextResponse.json(
+        { error: 'Invalid request origin' },
+        { status: 403 }
+      );
+    }
+
     // Get authenticated user
     const supabase = await createServerClient();
     const {
@@ -24,13 +33,24 @@ export async function POST(request: NextRequest) {
     // Get or create Stripe customer
     const { data: tracking } = (await supabaseAdmin
       .from('usage_tracking')
-      .select('id, stripe_customer_id')
+      .select('id, stripe_customer_id, plan, subscription_id')
       .eq('user_id', userId)
       .order('date', { ascending: false })
       .limit(1)
       .maybeSingle()) as {
-      data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'stripe_customer_id'> | null;
+      data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'id' | 'stripe_customer_id' | 'plan' | 'subscription_id'> | null;
     };
+
+    // SECURITY: Prevent double subscriptions
+    if (tracking?.plan === 'pro' && tracking?.subscription_id) {
+      // User already has active subscription, redirect to billing portal
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: tracking.stripe_customer_id!,
+        return_url: `${request.nextUrl.origin}/settings`,
+      });
+
+      return NextResponse.json({ url: portalSession.url });
+    }
 
     let customerId = tracking?.stripe_customer_id;
 

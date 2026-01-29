@@ -26,6 +26,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // SECURITY: Idempotency check - prevent duplicate event processing
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existingEvent } = await (supabaseAdmin.from('webhook_events') as any)
+      .select('id')
+      .eq('stripe_event_id', event.id)
+      .maybeSingle();
+
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed, skipping`);
+      return NextResponse.json({ received: true, skipped: true });
+    }
+
+    // Record event as processing (prevents concurrent duplicate processing)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin.from('webhook_events') as any)
+      .insert({
+        stripe_event_id: event.id,
+        event_type: event.type,
+        customer_id: (event.data.object as any).customer || null,
+      });
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -38,14 +59,20 @@ export async function POST(request: NextRequest) {
 
         const { data: tracking } = (await supabaseAdmin
           .from('usage_tracking')
-          .select('user_id')
+          .select('user_id, plan')
           .eq('stripe_customer_id', customerId)
           .order('date', { ascending: false })
           .limit(1)
-          .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id'> | null };
+          .maybeSingle()) as { data: Pick<Database['public']['Tables']['usage_tracking']['Row'], 'user_id' | 'plan'> | null };
 
         if (!tracking?.user_id) {
           console.error(`No usage tracking found for customer ${customerId}`);
+          break;
+        }
+
+        // SECURITY: Double-check user isn't already Pro (race condition protection)
+        if (tracking.plan === 'pro') {
+          console.log(`User ${tracking.user_id} already Pro, skipping upgrade`);
           break;
         }
 
@@ -57,6 +84,12 @@ export async function POST(request: NextRequest) {
             subscription_id: session.subscription as string,
           })
           .eq('user_id', tracking.user_id);
+
+        // Update webhook_events with user_id for audit trail
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.from('webhook_events') as any)
+          .update({ user_id: tracking.user_id })
+          .eq('stripe_event_id', event.id);
 
         console.log(`User ${tracking.user_id} upgraded to Pro`);
         break;

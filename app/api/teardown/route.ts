@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, createServerClient } from '@/lib/supabase/server';
 import { validateAndNormalizeUrl } from '@/lib/url-utils';
 import { checkRateLimit, incrementUsage } from '@/lib/rate-limit';
+import { validateCSRF } from '@/lib/csrf';
 import { randomBytes } from 'crypto';
 import type { Database } from '@/types/database';
 
@@ -39,13 +40,16 @@ function getOrCreateSessionId(request: NextRequest): string {
 
 /**
  * Get client IP address from headers
+ * SECURITY: On Vercel, x-forwarded-for is set by edge network (trusted)
+ * Not spoofable by client. Falls back to x-real-ip then 'unknown'.
  */
 function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+
+  // Vercel edge network sets x-forwarded-for reliably
+  // Client cannot spoof this header on Vercel platform
+  return forwardedFor?.split(',')[0].trim() || realIp || 'unknown';
 }
 
 /**
@@ -81,6 +85,14 @@ async function checkRecentDuplicate(
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: CSRF protection
+    if (!validateCSRF(request)) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Invalid request origin' },
+        { status: 403 }
+      );
+    }
+
     // Parse request body
     const body: TeardownRequest = await request.json();
 
