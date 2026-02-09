@@ -2,11 +2,32 @@
   "name": "teardown-generator",
   "version": "0.1.0",
   "private": true,
+  "description": "SaaS intelligence platform - reverse-engineer any SaaS in 60 seconds. Tech stack detection, pricing analysis, SEO audit, and clone estimation.",
+  "author": "Chudi Nnorukam",
+  "license": "MIT",
+  "homepage": "https://teardown.chudi.dev",
+  "keywords": [
+    "saas",
+    "teardown",
+    "tech-stack",
+    "seo-audit",
+    "pricing-analysis",
+    "clone-estimate",
+    "next.js",
+    "supabase",
+    "stripe"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chudinnorukam/teardown-generator"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:accuracy": "tsx scripts/accuracy-test.ts",
     "test:load": "k6 run scripts/load-test.js",
     "test:load:smoke": "k6 run --env SCENARIO=smoke scripts/load-test.js"
@@ -42,6 +63,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

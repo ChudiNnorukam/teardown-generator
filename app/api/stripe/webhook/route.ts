@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .insert({
         stripe_event_id: event.id,
         event_type: event.type,
-        customer_id: (event.data.object as any).customer || null,
+        customer_id: (event.data.object as Record<string, unknown>).customer || null,
       });
 
     switch (event.type) {
